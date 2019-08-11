@@ -1,0 +1,25 @@
+{
+  "name": "zuzu",
+  "version": "0.0.1",
+  "description": "Tehdään puhuva robotti tyttäreni kanssa",
+  "main": "main.js",
+  "dependencies": {
+    "@google-cloud/text-to-speech": "^1.1.3",
+    "play-sound": "^1.1.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cloud",
+    "gcp",
+    "aws",
+    "text-to-speech",
+    "face recognition",
+    "ai",
+    "robot"
+  ],
+  "author": "Henrik Ingo",
+  "license": "Apache-2.0"
+}
