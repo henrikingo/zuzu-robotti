@@ -9,28 +9,24 @@ const rekognition = new AWS.Rekognition({region: "eu-central-1"});
 const s3 = new AWS.S3({region: "eu-central-1"});
 const fs = require('fs');
 
-var _robot;
-var _FriendFactory;
-
-module.exports = async function (imageFilePath, callback) {
-    doBoth(imageFilePath, callback);
-}
+const collection = "zuzufriends";
+const s3obj = {S3Object:{Bucket:"zuzu",Name:"zuzu-camera.jpg"}};
 
 // Depends on creating an IAM user with AmazonRekognitionFullAccess and maybe AmazonS3ReadOnlyAccess as explained in
 // https://docs.aws.amazon.com/rekognition/latest/dg/setting-up.html#setting-up-iam
 // And API keys saved in ~/.aws/credentials under [zuzu] 
-const doBoth = function (imageFilePath, callback) {
+const doBoth = async function (imageFilePath, callback) {
     //console.log(base64_img);
     uploadFile(imageFilePath, doRekognition(callback));
 };
 
 const doRekognition = function (callback) {
     // This will itself be sent as a callback, so return callable function (sigh)
-    return function(S3Path) {
+    return function() {
         console.log("send rekognition request...");
         var params = {
-            CollectionId: "zuzufriends",
-            Image: {S3Object:{Bucket:"zuzu",Name:"zuzu-camera.jpg"}}
+            CollectionId: collection,
+            Image: s3obj
         };
         rekognition.searchFacesByImage(params, function (err, data) {
             if (err) {
@@ -74,6 +70,29 @@ const uploadFile = (fileName, callback) => {
             throw err;
         }
         console.log(`File uploaded successfully. ${data.Location}`);
-        callback(data.Location);
+        callback();
     });
+};
+
+const addNewFace = function ( friend, callback ) {
+    console.log("addNewFace(" + friend.name + ")");
+    var params = {
+        CollectionId: collection, 
+        ExternalImageId: friend.name, 
+        Image: s3obj
+    };
+    rekognition.indexFaces(params, function(err, data) {
+        if (err) {
+            console.log(err, err.stack); // an error occurred
+        }
+        else {
+            console.log(data);           // successful response
+            callback();
+        }
+    });
+};
+
+module.exports = {
+    search: doBoth,
+    add: addNewFace,
 };
