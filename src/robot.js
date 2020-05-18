@@ -28,6 +28,12 @@ function Robot (opts) {
             console.log("intro done");
         };
 
+        this.alone = async function () {
+            console.log("alone");
+            await tts(`Eihän täällä ole ketään.`);
+            console.log("alone done");
+        };
+
         this.wakeUp = function () {
             this.see();
         };
@@ -42,15 +48,18 @@ function Robot (opts) {
 
         this.faceRecognition = function(){
             const robot = this;
-            faceRecognition.search(robot.cameraFileName, async function(name){
+            faceRecognition.search(robot.cameraFileName, async function(result){
                 console.log("In faceRecognition callback...");
-                if ( name !== undefined ) {
-                    const friend = Friend.create({name: name});
+                if ( result.status == "OK" ) {
+                    const friend = Friend.create({name: result.name});
                     await robot.greetFriend(friend);
                     await robot.introduceMyself();
                 }
-                else {
+                else if (result.status == "UNKNOWN FACE") {
                     await robot.greetStranger();
+                }
+                else if (result.status == "NO FACE" ) {
+                     await robot.alone();
                 }
             });
         };

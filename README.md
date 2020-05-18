@@ -1,3 +1,7 @@
+## Install
+
+    sudo apt install fswebcam aplay
+
 
 ## Register faces to Rekognition collection
 

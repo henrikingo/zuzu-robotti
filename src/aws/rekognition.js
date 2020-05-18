@@ -31,7 +31,7 @@ const doRekognition = function (callback) {
         rekognition.searchFacesByImage(params, function (err, data) {
             if (err) {
                 if ( err.message == "There are no faces in the image. Should be at least 1." ) {
-                    // Nothing to do.
+                    callback({original_error: err, status: "NO FACE"})
                 }
                 else {
                     console.log(err, err.stack);
@@ -41,10 +41,12 @@ const doRekognition = function (callback) {
                 console.log(data);
                 if ( data.FaceMatches && data.FaceMatches.length > 0 ) {
                     console.log(data.FaceMatches[0].Face);
-                    callback(data.FaceMatches[0].Face.ExternalImageId);
+                    callback({name: data.FaceMatches[0].Face.ExternalImageId,
+                              confidence: data.FaceMatches[0].Face.Confidence,
+                              status: "OK"});
                 } else {
                     // There is a face but it didn't match anyone in our Rekognition collection.
-                    callback();
+                    callback({status: "UNKNOWN FACE"});
                 }
             }
         });
