@@ -1,8 +1,8 @@
 ## Dependencies
 
-    sudo apt install fswebcam mplayer
+    sudo apt install fswebcam mplayer alsa-utils
 
-GCP text-to-speech returns mp3, so mplayer is required.
+GCP text-to-speech returns mp3, so mplayer is required. alsa-utils is for arecord.
 
 ## Register faces to Rekognition collection
 
