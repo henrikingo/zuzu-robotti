@@ -17,7 +17,7 @@ module.exports = async function (text) {
   const request = {
     input: {text: text},
     // Select the language and SSML Voice Gender (optional)
-    voice: {languageCode: 'fi-FI', ssmlGender: 'FEMALE'},
+    voice: {languageCode: 'en-gb', name: 'en-US-Wavenet-G', ssmlGender: 'FEMALE'},
     // Select the type of audio encoding
     audioConfig: {audioEncoding: 'MP3'},
   };

@@ -1,3 +1,5 @@
+const i18n = require('i18n');
+
 const Friend = require('./friend.js');
 const tts = require('./gcp/text-to-speech.js');
 const faceRecognition = require('./aws/rekognition.js');
@@ -11,26 +13,26 @@ function Robot (opts) {
 
         this.greetFriend = async function (friend) {
             console.log("greet");
-            await tts(`Hei ${friend.name}!`);
+            await tts(i18n.__('Hello %s!', friend.name));
             console.log("greet done");
         };
 
         this.greetStranger = async function (friend) {
             console.log("greet stranger");
-            await tts(`Hei! Minun nimeni on ${this.name}. Mikä sinun nimi on?`);
+            await tts(i18n.__('Hello! My name is %s. What\'s your name?', this.name));
             console.log("greet stranger done");
             await this.listen();
         };
 
         this.introduceMyself = async function () {
             console.log("intro");
-            await tts(`Minun nimeni on ${this.name}.`);
+            await tts(i18n.__('My name is %s.', this.name));
             console.log("intro done");
         };
 
         this.alone = async function () {
             console.log("alone");
-            await tts(`Eihän täällä ole ketään.`);
+            await tts(i18n.__("Hm. There's no one here."));
             console.log("alone done");
         };
 
@@ -77,7 +79,7 @@ function Robot (opts) {
                     })
                 }
                 else {
-                    await tts("Hymm... Nyt en kyllä saanut nimestä selvää. Ei se mitään. Yritä uudestaan.");
+                    await tts(i18n.__("Sorry, I didn't quite catch your name. Can you please try again."));
                 }
             };
             await speechRecognition(listenCallback, (err) => console.log(err));

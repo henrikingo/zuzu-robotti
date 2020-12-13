@@ -1,8 +1,8 @@
 ## Dependencies
 
-    sudo apt install fswebcam mplayer alsa-utils
+    sudo apt install fswebcam mplayer sox
 
-GCP text-to-speech returns mp3, so mplayer is required. alsa-utils is for arecord.
+GCP text-to-speech returns mp3, so mplayer is required. sox is for `rec` audio recorder.
 
 ## Register faces to Rekognition collection
 
