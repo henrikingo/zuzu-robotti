@@ -69,9 +69,9 @@ function Robot (opts) {
             const listenCallback = async function (res) {
                 console.log("processListen()");
                 console.log(res);
-                if ( res.entities.contact ) {
-                    console.log(res.entities.contact[0]);
-                    const friend = Friend.create({name: res.entities.contact[0].value});
+                if ( res.entities['wit$contact:contact'] ) {
+                    console.log(res.entities['wit$contact:contact']);
+                    const friend = Friend.create({name: res.entities['wit$contact:contact'][0].value});
                     faceRecognition.add(friend, async function() {
                         await robot.greetFriend(friend);
                     })
