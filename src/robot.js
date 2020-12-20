@@ -5,7 +5,8 @@ const tts = require('./gcp/text-to-speech.js');
 const faceRecognition = require('./aws/rekognition.js');
 const assert = require('assert');
 const camera = require('./camera/camera.js');
-const speechRecognition = require('./listen/speechRecognition.js')
+//const speechRecognition = require('./listen/speechRecognition.js')
+const speechRecognition = require('./listen/dialogflow.js')
 
 function Robot (opts) {
         assert(opts.name);
@@ -68,20 +69,49 @@ function Robot (opts) {
 
         this.listen = async function () {
             const robot = this;
-            const listenCallback = async function (res) {
-                console.log("processListen()");
-                console.log(res);
-                if ( res.entities['wit$contact:contact'] ) {
-                    console.log(res.entities['wit$contact:contact']);
-                    const friend = Friend.create({name: res.entities['wit$contact:contact'][0].value});
-                    faceRecognition.add(friend, async function() {
-                        await robot.greetFriend(friend);
-                    })
-                }
-                else {
-                    await tts(i18n.__("Sorry, I didn't quite catch your name. Can you please try again."));
+//             const listenCallback = async function (res) {
+//                 console.log("processListen()");
+//                 console.log(res);
+//                 if ( res.entities['wit$contact:contact'] ) {
+//                     console.log(res.entities['wit$contact:contact']);
+//                     const friend = Friend.create({name: res.entities['wit$contact:contact'][0].value});
+//                     faceRecognition.add(friend, async function() {
+//                         await robot.greetFriend(friend);
+//                     })
+//                 }
+//                 else {
+//                     await tts(i18n.__("Sorry, I didn't quite catch your name. Can you please try again."));
+//                 }
+//             };
+              const listenCallback = async function (data) {
+                //console.log(data);
+                if (data.recognitionResult) {
+                    console.log(
+                        `Intermediate transcript: ${data.recognitionResult.transcript}`
+                    );
+                } else {
+                    console.log('Detected intent:');
+
+                    const result = data.queryResult;
+                    console.log(`  Query: ${result.queryText}`);
+                    console.log(`  Response: ${result.fulfillmentText}`);
+                    if (result.intent) {
+                        console.log(data);
+                        console.log(`  Intent: ${result.intent.displayName}`);
+                        const friend = Friend.create({name: result.parameters.fields.person.structValue.fields.name.stringValue});
+                        faceRecognition.add(friend, async function() {
+                            await robot.greetFriend(friend);
+                        })
+                    } else {
+                        console.log('  No intent matched.');
+                        console.log(data);
+                        await tts(i18n.__("Sorry, I didn't quite catch your name. Can you please try again."));
+                    }
+                    const parameters = JSON.stringify(result.parameters);
+                    console.log(`  Parameters: ${parameters}`);
                 }
             };
+
             await speechRecognition(listenCallback, (err) => console.log(err));
             console.log("Started listen()ing. I'm done. Callback will handle things after you finish talking.");
         };
