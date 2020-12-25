@@ -36,11 +36,35 @@ const audioCapture = function () {
     return audioRecorder.stream();
 };
 
-module.exports = async function(callback, err) {
+const dialogFlowStart = async function(callback, err) {
     const audioStream = audioCapture();
     greetStrangerIntent(audioStream, callback, err);
-}
+};
 
+const getNameInResult = function(queryResult) {
+    console.log(`  Query: ${queryResult.queryText}`);
+    console.log(`  Response: ${queryResult.fulfillmentText}`);
+
+    if (! (queryResult.intent && queryResult.allRequiredParamsPresent) )
+        return null;
+
+    console.log(`  Intent: ${queryResult.intent.displayName}`);
+
+    if (queryResult.parameters && queryResult.parameters.fields && queryResult.parameters.fields.customName && queryResult.parameters.fields.customName.stringValue)
+        return queryResult.parameters.fields.customName.stringValue;
+
+    if (queryResult.parameters &&
+        queryResult.parameters.fields &&
+        queryResult.parameters.fields.customName &&
+        queryResult.parameters.fields.customName.structValue &&
+        queryResult.parameters.fields.customName.structValue.fields &&
+        queryResult.parameters.fields.customName.structValue.fields.name &&
+        queryResult.parameters.fields.customName.structValue.fields.name.stringValue
+    )
+        return queryResult.parameters.fields.customName.structValue.fields.name.stringValue;
+};
+
+module.exports = {start: dialogFlowStart, getNameInResult: getNameInResult}
 
 
 // The rest is dialogflow code from
@@ -59,27 +83,64 @@ module.exports = async function(callback, err) {
 // const languageCode = 'en-US';
 // Instantiates a session client
 const sessionClient = new dialogflow.SessionsClient();
-const sessionId = Math.random().toString();
+const sessionId = Math.random().toString().substring(2,8);
 
 const sessionPath = sessionClient.projectAgentSessionPath(
   'zuzu-robotti', // projectId
   sessionId
 );
 
-const initialStreamRequest = {
+const contextsClient = new dialogflow.ContextsClient();
+async function createContext() {
+    const contextPath = contextsClient.projectAgentSessionContextPath('zuzu-robotti', sessionId, 'greetStrangerContext');
+
+    const request = {
+        parent: sessionPath,
+        context: {
+            name: contextPath,
+            lifespanCount: 1
+        }
+    };
+    const [context] = await contextsClient.createContext(request);
+    return context;
+}
+
+// Since Google doesn't know Finnish names - and refuses to learn - we have to feed them in a
+// speech context. They need a relatively high boost too.
+
+let familyNamesContext = {
+    "phrases": [
+        "Ebba", "Albert", "Sanna", "Henrik", "Roosa", "Sampsa", "Osmo", "Virpi", "Ritva", "Katri",
+        "Tom", "Kati", "Oona", "Peetu"
+    ],
+    "boost": 10
+};
+
+let friendsNamesContext = {
+    "phrases": [
+        "Lumi", "Aino", "Van", "Emma", "Markku"
+    ],
+    "boost": 5
+};
+
+let request = {
   session: sessionPath,
   queryParams: {
     session: sessionPath,
+    contexts: []
   },
   queryInput: {
     audioConfig: {
       audioEncoding: options.encoding,
       sampleRateHertz: options.rate,
       languageCode: 'en-US',
+      speechContexts: [familyNamesContext, friendsNamesContext],
     },
     singleUtterance: true,
   },
 };
+// initial context
+createContext().then((result) => {request.queryParams.contexts = [result]});
 
 const greetStrangerIntent = async function (audioStream, resolve, reject) {
     console.log("Call DialogFlow using " + audioStream + " as input");
@@ -90,8 +151,9 @@ const greetStrangerIntent = async function (audioStream, resolve, reject) {
     .on('data', resolve)
     .on('end', () => {console.log('end of audio streaming');});
 
-    // Write the initial stream request to config for audio input.
-    detectStream.write(initialStreamRequest);
+    // Send the initial stream request to config for audio input.
+    console.log(JSON.stringify(request));
+    detectStream.write(request);
     await pump(
         audioStream,
         // Format the audio stream into the request format.

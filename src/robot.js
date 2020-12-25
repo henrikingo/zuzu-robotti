@@ -6,7 +6,7 @@ const faceRecognition = require('./aws/rekognition.js');
 const assert = require('assert');
 const camera = require('./camera/camera.js');
 //const speechRecognition = require('./listen/speechRecognition.js')
-const speechRecognition = require('./listen/dialogflow.js')
+const dialogflow = require('./listen/dialogflow.js')
 
 function Robot (opts) {
         assert(opts.name);
@@ -83,7 +83,9 @@ function Robot (opts) {
 //                     await tts(i18n.__("Sorry, I didn't quite catch your name. Can you please try again."));
 //                 }
 //             };
-              const listenCallback = async function (data) {
+//            await speechRecognition(listenCallback, (err) => console.log(err));
+
+            const listenCallback = async function (data) {
                 //console.log(data);
                 if (data.recognitionResult) {
                     console.log(
@@ -91,28 +93,26 @@ function Robot (opts) {
                     );
                 } else {
                     console.log('Detected intent:');
+                    console.log(JSON.stringify(data));
 
-                    const result = data.queryResult;
-                    console.log(`  Query: ${result.queryText}`);
-                    console.log(`  Response: ${result.fulfillmentText}`);
-                    if (result.intent) {
-                        console.log(data);
-                        console.log(`  Intent: ${result.intent.displayName}`);
-                        const friend = Friend.create({name: result.parameters.fields.person.structValue.fields.name.stringValue});
+                    const queryResult = data.queryResult;
+                    const name = dialogflow.getNameInResult(queryResult);
+
+                    if (name) {
+                        const friend = Friend.create({name: name});
                         faceRecognition.add(friend, async function() {
                             await robot.greetFriend(friend);
+                            await tts(i18n.__("Nice to meet you."));
                         })
                     } else {
-                        console.log('  No intent matched.');
+                        console.log('  Name not found in result.');
                         console.log(data);
                         await tts(i18n.__("Sorry, I didn't quite catch your name. Can you please try again."));
                     }
-                    const parameters = JSON.stringify(result.parameters);
-                    console.log(`  Parameters: ${parameters}`);
                 }
             };
 
-            await speechRecognition(listenCallback, (err) => console.log(err));
+            await dialogflow.start(listenCallback, (err) => console.log(err));
             console.log("Started listen()ing. I'm done. Callback will handle things after you finish talking.");
         };
 
