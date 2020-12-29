@@ -118,7 +118,7 @@ let familyNamesContext = {
 
 let friendsNamesContext = {
     "phrases": [
-        "Lumi", "Aino", "Van", "Emma", "Markku"
+        "Lumi", "Lassi", "Lenni", "Sampo", "Riina", "Aino", "Van", "Emma", "Markku", "Elvi", "Olavi", "Elina", "Lauri", "Ada", "Heidi", "Tuomas", "Tumppi"
     ],
     "boost": 5
 };
