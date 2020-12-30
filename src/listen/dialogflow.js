@@ -24,7 +24,7 @@ const options = {
   // Following options only available when using `rec` or `sox`.
   silence: 3,         // Duration of silence in seconds before it stops recording.
   thresholdStart: 0.1,  // Silence threshold to start recording.
-  thresholdStop: 0.3,   // Silence threshold to stop recording.
+  thresholdStop: 1.1,   // Silence threshold to stop recording.
   keepSilence: true   // Keep the silence in the recording.
 };
 
