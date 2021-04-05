@@ -101,7 +101,9 @@ async function createContext() {
             lifespanCount: 1
         }
     };
+    console.log(request);
     const [context] = await contextsClient.createContext(request);
+    console.log(context);
     return context;
 }
 
@@ -140,10 +142,10 @@ let request = {
   },
 };
 // initial context
-createContext().then((result) => {request.queryParams.contexts = [result]});
+createContext().then((context) => {request.queryParams.contexts = [context]; console.log(context);});
 
 const greetStrangerIntent = async function (audioStream, resolve, reject) {
-    console.log("Call DialogFlow using " + audioStream + " as input");
+    console.log("Call DialogFlow using audioStream \n" + JSON.stringify(audioStream) + "\n as input");
     // Create a stream for the streaming request.
     const detectStream = sessionClient
     .streamingDetectIntent()
@@ -152,7 +154,7 @@ const greetStrangerIntent = async function (audioStream, resolve, reject) {
     .on('end', () => {console.log('end of audio streaming');});
 
     // Send the initial stream request to config for audio input.
-    console.log(JSON.stringify(request));
+    console.log("detectStream request:\n" + JSON.stringify(request));
     detectStream.write(request);
     await pump(
         audioStream,

@@ -53,6 +53,7 @@ function Robot (opts) {
             const robot = this;
             faceRecognition.search(robot.cameraFileName, async function(result){
                 console.log("In faceRecognition callback...");
+                console.log(result);
                 if ( result.status == "OK" ) {
                     const friend = Friend.create({name: result.name});
                     await robot.greetFriend(friend);

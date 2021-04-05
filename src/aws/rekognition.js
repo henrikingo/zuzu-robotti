@@ -89,7 +89,7 @@ const addNewFace = function ( friend, callback ) {
         }
         else {
             console.log(data);           // successful response
-            callback();
+            if (callback) callback();
         }
     });
 };
