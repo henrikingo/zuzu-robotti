@@ -5,7 +5,7 @@ function DialogFlowActions(robot) {
     this.robot = robot;
 
     this.action = function(queryResult) {
-        if (queryResult.action)
+        if (queryResult.action && typeof this[queryResult.action] == "function")
             this[queryResult.action](queryResult);
     };
 

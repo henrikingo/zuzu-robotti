@@ -25,7 +25,7 @@ const options = {
   type: `wav`,        // Format type.
  
   // Following options only available when using `rec` or `sox`.
-  silence: 3,         // Duration of silence in seconds before it stops recording.
+  silence: 2,         // Duration of silence in seconds before it stops recording.
   thresholdStart: 0.1,  // Silence threshold to start recording.
   thresholdStop: 1.1,   // Silence threshold to stop recording.
   keepSilence: true   // Keep the silence in the recording.
@@ -103,13 +103,13 @@ function DialogFlowEngine (robot) {
         const sessionContext = JSON.parse(JSON.stringify(this.sessionContext));
         sessionContext.queryInput.event = eventObj;
         const responses = await this.nextIntent(sessionContext);
-        await play(responses[0].outputAudio);
+        robot.play(responses[0].outputAudio);
     };
 
     this.nextIntent = async function (sessionContext) {
         if (!sessionContext) sessionContext = this.sessionContext;
 
-        console.log(JSON.stringify(sessionContext, null, "  "));
+//         console.log(JSON.stringify(sessionContext, null, "  "));
         const responses = await this.sessionClient.detectIntent(sessionContext);
         console.log(responses);
         console.log(JSON.stringify(responses[0].queryResult));
@@ -174,7 +174,7 @@ function DialogFlowEngine (robot) {
         return newContext;
     };
 
-    this.streamIntent = async function (sessionContext) {
+    this.streamIntent = async function (sessionContext, callback) {
       if (!sessionContext) sessionContext = this.sessionContext;
 
       sessionContext.queryInput.audioConfig.speechContexts = this.speechCtx.getContexts();
@@ -187,7 +187,7 @@ function DialogFlowEngine (robot) {
         .streamingDetectIntent()
         .on('error', (err) => console.log(err))
         .on('data', this._streamIntentCallback(this))
-        .on('end', () => {console.log('end of audio streaming');});
+        .on('end', () => {console.log('end of audio streaming'); if(callback) callback();});
 
       // Send the initial stream request to config for audio input.
       console.log(JSON.stringify(sessionContext));
@@ -217,13 +217,15 @@ function DialogFlowEngine (robot) {
                 console.log('Detected intent:');
                 console.log(JSON.stringify(data));
 
-                // Save context for next call
                 const queryResult = data.queryResult;
-                dfEngine.sessionContext.queryParams.contexts = queryResult.outputContexts;
-                // The audio buffer is empty when streaming :-(
-                //play(data.outputAudio);
-                tts(queryResult.fulfillmentText);
-                dfEngine.dfActions.action(queryResult);
+                if (queryResult.intent && queryResult.fulfillmentText !== "") {
+                    // Save context for next call
+                    dfEngine.sessionContext.queryParams.contexts = queryResult.outputContexts;
+                    // The audio buffer is empty when streaming :-(
+                    //play(data.outputAudio);
+                    robot.say(queryResult.fulfillmentText);
+                    dfEngine.dfActions.action(queryResult);
+                }
             }
         };
     };

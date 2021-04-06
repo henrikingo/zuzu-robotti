@@ -9,7 +9,7 @@ const util = require('util');
 
 // Depends on enabling text-to-speech and setting GOOGLE_APPLICATION_CREDENTIALS as explained at
 // https://cloud.google.com/text-to-speech/docs/quickstart-client-libraries#client-libraries-install-nodejs
-module.exports = async function (text) {
+module.exports = async function (text, callback) {
   // Creates a client
   const client = new textToSpeech.TextToSpeechClient();
 
@@ -34,5 +34,6 @@ module.exports = async function (text) {
     tmpfile.removeCallback();
     if (err) throw err
   });
-  
-}
+  if (typeof callback == "function") callback();
+
+};
