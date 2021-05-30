@@ -3,7 +3,7 @@ const i18n = require('i18n');
 const Friend = require('./friend.js');
 const tts = require('./gcp/text-to-speech.js');
 const play = require('./play/play');
-const faceRecognition = require('./aws/rekognition.js');
+const Rekognition = require('./aws/rekognition.js');
 const assert = require('assert');
 const camera = require('./camera/camera.js');
 //const speechRecognition = require('./listen/speechRecognition.js')
@@ -13,6 +13,7 @@ function DialogFlowRobot (opts) {
         assert(opts.name);
         this.name = opts.name;
         this.dialogflow = dialogflow.create(this, opts.config);
+        this.rekognition = Rekognition.create({config: opts.config});
         const robot = this;
 
         this.wakeUp = function () {
@@ -87,7 +88,7 @@ function DialogFlowRobot (opts) {
         };
 
         this.faceRecognition = function(callback){
-            faceRecognition.search(robot.cameraFileName, async function(result){
+            this.rekognition.search(robot.cameraFileName, async function(result){
                 console.log("In faceRecognition callback...");
                 // This plays the first prompt uttered by the robot
                 if ( result.status == "OK" ) {
@@ -108,7 +109,7 @@ function DialogFlowRobot (opts) {
 
         // Save new face in Rekognition service
         this.addFriend = function (friend) {
-            faceRecognition.add(friend, opts.config.aws);
+            this.rekognition.add(friend, opts.config.aws);
             this.friend = friend;
         };
 
