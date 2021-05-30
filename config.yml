@@ -1,0 +1,31 @@
+default:
+  locale: en
+  robot:
+    name: Zuzu
+    name_for_tts: Susu
+  gcp:
+    project: zuzu2-vpxh
+    tts_options:
+        languageCode: en-gb
+        name: en-US-Wavenet-G
+        ssmlGender: FEMALE
+  aws:
+    region: eu-central-1  # Override .aws/credentials profile
+    s3:
+      bucket: zuzu
+    rekognition:
+      collection: zuzufriends
+  audiorecorder:
+    program: rec     # Which program to use, either `arecord`, `rec`, or `sox`.
+    device: null       # Recording device to use. (only for `arecord`)
+    bits: 16           # Sample size. (only for `rec` and `sox`)
+    channels: 1        # Channel count.
+    encoding: signed-integer  # Encoding type. (only for `rec` and `sox`)
+    format: S16_LE   # Encoding type. (only for `arecord`)
+    rate: 16000        # Sample rate.
+    type: wav        # Format type.
+    # Following options only available when using `rec` or `sox`.
+    silence: 2         # Duration of silence in seconds before it stops recording.
+    thresholdStart: 0.1  # Silence threshold to start recording.
+    thresholdStop: 1.1   # Silence threshold to stop recording.
+    keepSilence: true   # Keep the silence in the recording.

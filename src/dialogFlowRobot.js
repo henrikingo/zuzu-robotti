@@ -12,7 +12,7 @@ const dialogflow = require('./dialogflow/engine.js');
 function DialogFlowRobot (opts) {
         assert(opts.name);
         this.name = opts.name;
-        this.dialogflow = dialogflow.create(this);
+        this.dialogflow = dialogflow.create(this, opts.config);
         const robot = this;
 
         this.wakeUp = function () {
@@ -68,7 +68,7 @@ function DialogFlowRobot (opts) {
                     if (whatToSay && whatToSay.type == "text") {
                         console.log("Play text: " + whatToSay.text);
                         this._speaking = true;
-                        tts(whatToSay.text, function() {
+                        tts(whatToSay.text, opts.config.gcp.tts_options, function() {
                             robot._speaking = false;
                         });
                     }
@@ -108,7 +108,7 @@ function DialogFlowRobot (opts) {
 
         // Save new face in Rekognition service
         this.addFriend = function (friend) {
-            faceRecognition.add(friend);
+            faceRecognition.add(friend, opts.config.aws);
             this.friend = friend;
         };
 

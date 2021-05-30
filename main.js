@@ -1,7 +1,8 @@
 const i18n = require('i18n');
 const yargs = require('yargs');
+const yaml_config = require('yaml-config');
+const config = require('yaml-config').readConfig(__dirname + "/config.yml");
 
-//const Robot = require('./src/robot.js');
 const DialogFlowRobot = require('./src/dialogFlowRobot.js');
 
 
@@ -12,15 +13,15 @@ async function main() {
         directory: __dirname + '/locales'
     });
     // Right now code is hard coded. Will extract locale and other config options later.
-    i18n.setLocale('en');
+    i18n.setLocale(config.locale);
 
     const argv = parseArgs();
     if (argv._[0] == 'zuzu1') {
-        const robot = Robot.create({name: "Susu"});
+        const robot = Robot.create({name: config.robot.name_for_tts});
         robot.wakeUp();
     }
     else {
-        const robot = DialogFlowRobot.create({name: "Susu"})
+        const robot = DialogFlowRobot.create({name: config.robot.name_for_tts, config: config})
         robot.wakeUp();
     }
 }

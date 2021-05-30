@@ -17,6 +17,7 @@
     "sleep": "^6.3.0",
     "tmp": "^0.1.0",
     "underscore": "^1.10.2",
+    "yaml-config": "^0.3.0",
     "yargs": "^15.4.1"
   },
   "scripts": {

@@ -1,12 +1,17 @@
+// Force AWS SDK to use credentials and config files :facepalm:
+process.env.AWS_PROFILE = 'zuzu';
+process.env.AWS_SDK_LOAD_CONFIG = '1';
+
+
 // Imports the AWS client library
 const AWS = require('aws-sdk');
-AWS.config.update({region: 'eu-central-1'});
 var credentials = new AWS.SharedIniFileCredentials({profile: 'zuzu'});
 AWS.config.credentials = credentials;
 AWS.config.logger = console;
 
-const rekognition = new AWS.Rekognition({region: "eu-central-1"});
-const s3 = new AWS.S3({region: "eu-central-1"});
+const rekognition = new AWS.Rekognition();
+//const s3 = new AWS.S3({region: "eu-central-1"});
+const s3 = new AWS.S3();
 const fs = require('fs');
 
 const collection = "zuzufriends";
@@ -16,7 +21,6 @@ const s3obj = {S3Object:{Bucket:"zuzu",Name:"zuzu-camera.jpg"}};
 // https://docs.aws.amazon.com/rekognition/latest/dg/setting-up.html#setting-up-iam
 // And API keys saved in ~/.aws/credentials under [zuzu] 
 const doBoth = async function (imageFilePath, callback) {
-    //console.log(base64_img);
     uploadFile(imageFilePath, doRekognition(callback));
 };
 

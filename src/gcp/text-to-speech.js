@@ -9,7 +9,7 @@ const util = require('util');
 
 // Depends on enabling text-to-speech and setting GOOGLE_APPLICATION_CREDENTIALS as explained at
 // https://cloud.google.com/text-to-speech/docs/quickstart-client-libraries#client-libraries-install-nodejs
-module.exports = async function (text, callback) {
+module.exports = async function (text, ttsOptions, callback) {
   // Creates a client
   const client = new textToSpeech.TextToSpeechClient();
 
@@ -17,7 +17,7 @@ module.exports = async function (text, callback) {
   const request = {
     input: {text: text},
     // Select the language and SSML Voice Gender (optional)
-    voice: {languageCode: 'en-gb', name: 'en-US-Wavenet-G', ssmlGender: 'FEMALE'},
+    voice: ttsOptions,
     // Select the type of audio encoding
     audioConfig: {audioEncoding: 'MP3'},
   };

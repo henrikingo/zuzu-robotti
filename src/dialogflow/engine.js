@@ -1,65 +1,35 @@
 const AudioRecorder = require('node-audiorecorder');
 const util = require('util');
 const {Transform, pipeline} = require('stream');
-const play = require('../play/play');
-const tts = require('../gcp/text-to-speech.js');
 const DialogFlowActions = require('./actions');
 
 const pump = util.promisify(pipeline);
 // Imports the Dialogflow library
 const dialogflow = require('@google-cloud/dialogflow');
 
-///// Record audio into file - non blocking
-
-// Options is an optional parameter for the constructor call.
-// If an option is not given the default value, as seen below, will be used.
-const options = {
-  program: `rec`,     // Which program to use, either `arecord`, `rec`, or `sox`.
-  device: null,       // Recording device to use. (only for `arecord`)
- 
-  bits: 16,           // Sample size. (only for `rec` and `sox`)
-  channels: 1,        // Channel count.
-  encoding: `signed-integer`,  // Encoding type. (only for `rec` and `sox`)
-  format: `S16_LE`,   // Encoding type. (only for `arecord`)
-  rate: 16000,        // Sample rate.
-  type: `wav`,        // Format type.
- 
-  // Following options only available when using `rec` or `sox`.
-  silence: 2,         // Duration of silence in seconds before it stops recording.
-  thresholdStart: 0.1,  // Silence threshold to start recording.
-  thresholdStop: 1.1,   // Silence threshold to stop recording.
-  keepSilence: true   // Keep the silence in the recording.
-};
-
-const dfReguestAudioConfig = {
-    audioEncoding: options.encoding,
-    sampleRateHertz: options.rate,
-    languageCode: 'en-US',
-    speechContexts: [],  // Filled in for each request
-};
-
-const audioCapture = function () {
-    console.log('Start capturing audio');
-    let audioRecorder = new AudioRecorder(options, console);
-    audioRecorder.start();
-    return audioRecorder.stream();
-};
 
 ///// DialogFlow
 
-function DialogFlowEngine (robot) {
+function DialogFlowEngine (robot, config) {
     this.dfActions = DialogFlowActions(robot);
     this.sessionClient = new dialogflow.SessionsClient();
     this.sessionId = Math.random().toString().substring(2,8);
 
     this.sessionPath = this.sessionClient.projectAgentSessionPath(
-        'zuzu2-vpxh', // projectId
+        config.gcp.project, // projectId
         this.sessionId
     );
 
     this.contextsClient = new dialogflow.ContextsClient();
-    this.contextPath = this.contextsClient.projectAgentSessionContextPath('zuzu2-vpxh', this.sessionId, 'zuzucontext');
+    this.contextPath = this.contextsClient.projectAgentSessionContextPath(config.gcp.project, this.sessionId, 'zuzucontext');
     this.speechCtx = new SpeechContextManager();
+
+    const dfReguestAudioConfig = {
+      audioEncoding: config.audiorecorder.encoding,
+      sampleRateHertz: config.audiorecorder.rate,
+      languageCode: 'en-US',
+      speechContexts: [],  // Filled in for each request
+    };
 
     this.sessionContext = {
       session: this.sessionPath,
@@ -121,7 +91,7 @@ function DialogFlowEngine (robot) {
         if(parameters === undefined) parameters = null;
         if(!lifespanCount) lifespanCount = 5;
 
-        const contextPath = this.contextsClient.projectAgentSessionContextPath('zuzu2-vpxh', this.sessionId, contextName);
+        const contextPath = this.contextsClient.projectAgentSessionContextPath(config.gcp.project, this.sessionId, contextName);
         return {name: contextPath, lifespanCount: lifespanCount, parameters: parameters};
     };
 
@@ -157,7 +127,7 @@ function DialogFlowEngine (robot) {
     };
 
     this.deleteContext = function(contextName) {
-        const fullContextName = "projects/zuzu2-vpxh/agent/sessions/" + this.sessionId + "/contexts/" + contextName;
+        const fullContextName = "projects/"+config.gcp.project+"/agent/sessions/" + this.sessionId + "/contexts/" + contextName;
         for(let i=0; i<this.sessionContext.queryParams.contexts.length; i++) {
             if ( this.sessionContext.queryParams.contexts[i].name == fullContextName ) {
                 console.log("Deleting " + fullContextName + " from session context");
@@ -174,12 +144,19 @@ function DialogFlowEngine (robot) {
         return newContext;
     };
 
+    this.audioCapture = function () {
+        console.log('Start capturing audio');
+        const audioRecorder = new AudioRecorder(config.audiorecorder, console);
+        audioRecorder.start();
+        return audioRecorder.stream();
+    };
+
     this.streamIntent = async function (sessionContext, callback) {
       if (!sessionContext) sessionContext = this.sessionContext;
 
       sessionContext.queryInput.audioConfig.speechContexts = this.speechCtx.getContexts();
 
-      const audioStream = audioCapture();
+      const audioStream = this.audioCapture();
 
       console.log("Call DialogFlow using " + JSON.stringify(audioStream) + " as input");
       // Create a stream for the streaming request.
@@ -261,4 +238,4 @@ function SpeechContextManager () {
 }
 
 
-module.exports.create = function (robot) {return new DialogFlowEngine(robot);};
+module.exports.create = function (robot, config) {return new DialogFlowEngine(robot, config);};
