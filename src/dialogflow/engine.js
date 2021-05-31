@@ -22,7 +22,7 @@ function DialogFlowEngine (robot, config) {
 
     this.contextsClient = new dialogflow.ContextsClient();
     this.contextPath = this.contextsClient.projectAgentSessionContextPath(config.gcp.project, this.sessionId, 'zuzucontext');
-    this.speechCtx = new SpeechContextManager();
+    this.speechCtx = new SpeechContextManager(config);
 
     const dfReguestAudioConfig = {
       audioEncoding: config.audiorecorder.encoding,
@@ -211,19 +211,27 @@ function DialogFlowEngine (robot, config) {
     return this;
 }
 
-function SpeechContextManager () {
+function SpeechContextManager (config) {
+    this.myName = config.robot.name_for_tts
+    const zuzuWordsContext = {
+        "phrases": [
+            this.myName, this.myName + " Help", this.myName + " Go to sleep", this.myName + " Add new friend",
+            "Command", "Command Help", "Command Go to sleep", "Command Add new friend",
+        ],
+        "boost": 100
+    };
+
     // Since Google doesn't know Finnish names - and refuses to learn - we have to feed them in a
     // speech context. They need a relatively high boost too.
-
-    let familyNamesContext = {
+    const familyNamesContext = {
         "phrases": [
             "Ebba", "Albert", "Sanna", "Henrik", "Roosa", "Sampsa", "Osmo", "Virpi", "Ritva", "Katri",
             "Tom", "Kati", "Oona", "Peetu"
         ],
-        "boost": 10
+        "boost": 20
     };
 
-    let friendsNamesContext = {
+    const friendsNamesContext = {
         "phrases": [
             "Lumi", "Lassi", "Lenni", "Sampo", "Riina", "Aino", "Van", "Emma", "Markku", "Elvi", "Olavi", "Elina", "Lauri", "Ada", "Heidi", "Tuomas", "Tumppi"
         ],
@@ -231,7 +239,7 @@ function SpeechContextManager () {
     };
 
     this.getContexts = function () {
-        return [familyNamesContext, friendsNamesContext];
+        return [zuzuWordsContext, familyNamesContext, friendsNamesContext];
     }
 
     return this;

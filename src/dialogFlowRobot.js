@@ -109,7 +109,7 @@ function DialogFlowRobot (opts) {
 
         // Save new face in Rekognition service
         this.addFriend = function (friend) {
-            this.rekognition.add(friend, opts.config.aws);
+            this.rekognition.add(friend);
             this.friend = friend;
         };
 

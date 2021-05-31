@@ -1,3 +1,4 @@
+# Defaults optimized for Qbo One robot
 default:
   locale: en
   robot:
@@ -26,6 +27,10 @@ default:
     type: wav        # Format type.
     # Following options only available when using `rec` or `sox`.
     silence: 2         # Duration of silence in seconds before it stops recording.
-    thresholdStart: 0.1  # Silence threshold to start recording.
+    thresholdStart: 1.1  # Silence threshold to start recording.
     thresholdStop: 1.1   # Silence threshold to stop recording.
     keepSilence: true   # Keep the silence in the recording.
+pc-external-mic:
+  audiorecorder:
+    thresholdStart: 0.3
+    thresholdStop: 0.3
