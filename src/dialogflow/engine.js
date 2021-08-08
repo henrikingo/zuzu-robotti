@@ -1,3 +1,4 @@
+const assert = require('assert');
 const AudioRecorder = require('node-audiorecorder');
 const util = require('util');
 const {Transform, pipeline} = require('stream');
@@ -144,33 +145,35 @@ function DialogFlowEngine (robot, config) {
         return newContext;
     };
 
+    this.audioRecorder = null;
     this.audioCapture = function () {
         console.log('Start capturing audio');
-        const audioRecorder = new AudioRecorder(config.audiorecorder, console);
-        audioRecorder.start();
-        return audioRecorder.stream();
+        this.audioRecorder = new AudioRecorder(config.audiorecorder, console);
+        this.audioRecorder.start();
+        return this.audioRecorder.stream();
     };
 
+    this.audioStream = null;
     this.streamIntent = async function (sessionContext, callback) {
       if (!sessionContext) sessionContext = this.sessionContext;
 
       sessionContext.queryInput.audioConfig.speechContexts = this.speechCtx.getContexts();
 
-      const audioStream = this.audioCapture();
+      this.audioStream = this.audioCapture();
 
-      console.log("Call DialogFlow using " + JSON.stringify(audioStream) + " as input");
+      console.log("Call DialogFlow using " + JSON.stringify(this.audioStream) + " as input");
       // Create a stream for the streaming request.
       const detectStream = this.sessionClient
         .streamingDetectIntent()
-        .on('error', (err) => console.log(err))
+        .on('error', (err) => {console.log(err)})
         .on('data', this._streamIntentCallback(this))
-        .on('end', () => {console.log('end of audio streaming'); if(callback) callback();});
+        .on('end', () => {console.log('end of audio streaming'); this.listenProgress=0; if (callback) callback();});
 
       // Send the initial stream request to config for audio input.
       console.log(JSON.stringify(sessionContext));
       detectStream.write(sessionContext);
       await pump(
-        audioStream,
+        this.audioStream,
         // Format the audio stream into the request format.
         new Transform({
           objectMode: true,
@@ -183,9 +186,12 @@ function DialogFlowEngine (robot, config) {
 
     };
 
+    this.listenProgress = 0;
     this._streamIntentCallback = function (dfEngine) {
+        assert(this.listenProgress == 0);
         return function (data) {
             //console.log(data);
+            dfEngine.listenProgress++;
             if (data.recognitionResult) {
                 console.log(
                     `Intermediate transcript: ${data.recognitionResult.transcript}`
@@ -207,6 +213,13 @@ function DialogFlowEngine (robot, config) {
         };
     };
 
+    this.interrupt = function() {
+        assert(this.listenProgress == 0);
+        if ( this.audioRecorder ) {
+            console.log("Closing DialogFlow audio stream as you didn't say anything yet.");
+            this.audioRecorder.stop();
+        };
+    };
 
     return this;
 }

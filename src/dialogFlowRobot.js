@@ -9,6 +9,9 @@ const camera = require('./camera/camera.js');
 //const speechRecognition = require('./listen/speechRecognition.js')
 const dialogflow = require('./dialogflow/engine.js');
 
+const MAIN_LOOP = 100; // milliseconds
+const OCCASIONALLY = 10*1000; // milliseconds
+
 function DialogFlowRobot (opts) {
         assert(opts.name);
         this.name = opts.name;
@@ -28,6 +31,7 @@ function DialogFlowRobot (opts) {
 //             console.log("Top of main loop.");
             robot.reallySayThings();
             robot.listen();
+            occasionally(robot.see);
             setTimeout(robot.mainLoop, 100);
         };
 
@@ -40,6 +44,13 @@ function DialogFlowRobot (opts) {
 
         this._listening = false;
         this._speaking = false;
+        this.busy = function() {
+            return this.dialogflow.listenProgress > 0 || this._speaking;
+        };
+        this.idle = function() {
+            return ! this.busy();
+        };
+
         this.listen = function() {
             if ( !robot._listening && !robot._speaking && !robot._sayQueue.length ) {
                 console.log("Opening new stream to DialogFlow. You can speak anything you want.");
@@ -63,8 +74,9 @@ function DialogFlowRobot (opts) {
         };
 
         this.reallySayThings = function() {
-            if ( ! (this._listening || this._speaking) ) {
-                if (this._sayQueue) {
+            if ( this.idle() ) {
+                if (this._sayQueue.length) {
+                    this.dialogflow.interrupt();
                     const whatToSay = this._sayQueue.shift();
                     if (whatToSay && whatToSay.type == "text") {
                         console.log("Play text: " + whatToSay.text);
@@ -92,29 +104,56 @@ function DialogFlowRobot (opts) {
                 console.log("In faceRecognition callback...");
                 // This plays the first prompt uttered by the robot
                 if ( result.status == "OK" ) {
-                    this.friend = Friend.create({name: result.name});
-                    const friendContext = robot.dialogflow.addContext("friend", robot.dialogflow.formatCustomName(result.name));
-                    await robot.dialogflow.event("friend", friendContext.parameters);
+                    if ( !robot.friend || robot.friend.name != result.name) {
+                        // During this.wakeUp(), this is the expected path: recognize a face you know and greet them.
+                        // Later, during this.mainLoop(), this is the rare case when someone went away and a different face is recognized.
+                        robot.friend = Friend.create({name: result.name});
+                        robot.dialogflow.deleteContext("friend");
+                        const friendContext = robot.dialogflow.addContext("friend", robot.dialogflow.formatCustomName(result.name));
+                        await robot.dialogflow.event("friend", friendContext.parameters);
+                    }
                 }
                 else if (result.status == "UNKNOWN FACE") {
+                    robot.friend = null;
+                    robot.dialogflow.deleteContext("friend");
                     await robot.dialogflow.addContext("stranger");
                     await robot.dialogflow.event("stranger");
                 }
                 else if (result.status == "NO FACE" ) {
-                    await robot.dialogflow.event("noface");
+                    if ( robot.friend ) {
+                        robot.friend = null;
+                        robot.dialogflow.deleteContext("friend");
+                        await robot.dialogflow.event("noface");
+                    }
                 }
-                callback();
+                if ( typeof callback === "function" ) callback();
+                console.log("...end of faceRecognition callback.");
             });
         };
 
         // Save new face in Rekognition service
         this.addFriend = function (friend) {
             this.rekognition.add(friend);
-            this.friend = friend;
+            robot.friend = friend;
         };
 
         return this;
 }
+
+let ticks = {};
+const occasionally = function(callback, key) {
+    key = key ? key : "default";
+    let now = new Date();
+    // By design the first call is true
+    if ( !ticks[key] ) ticks[key] = now - OCCASIONALLY;
+
+    if ( now - ticks[key] > OCCASIONALLY) {
+        ticks[key] = now;
+        callback();
+        return true;
+    }
+    return false;
+};
 
 module.exports.create = function(opts) {
     return new DialogFlowRobot(opts);
