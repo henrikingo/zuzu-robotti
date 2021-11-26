@@ -34,3 +34,7 @@ pc-external-mic:
   audiorecorder:
     thresholdStart: 0.3
     thresholdStop: 0.3
+laptop:
+  audiorecorder:
+    thresholdStart: 0.3
+    thresholdStop: 4
