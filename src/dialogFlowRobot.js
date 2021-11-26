@@ -6,8 +6,8 @@ const play = require('./play/play');
 const Rekognition = require('./aws/rekognition.js');
 const assert = require('assert');
 const camera = require('./camera/camera.js');
-//const speechRecognition = require('./listen/speechRecognition.js')
 const dialogflow = require('./dialogflow/engine.js');
+const memory = require('./memory/memory.js');
 
 const MAIN_LOOP = 100; // milliseconds
 const OCCASIONALLY = 10*1000; // milliseconds
@@ -17,6 +17,7 @@ function DialogFlowRobot (opts) {
         this.name = opts.name;
         this.dialogflow = dialogflow.create(this, opts.config);
         this.rekognition = Rekognition.create({config: opts.config});
+        this.memory = memory.create(this, opts.config);
         const robot = this;
 
         this.wakeUp = function () {
@@ -32,6 +33,7 @@ function DialogFlowRobot (opts) {
             robot.reallySayThings();
             robot.listen();
             occasionally(robot.see);
+            occasionally(robot.memory.dump, "dumpMemory");
             setTimeout(robot.mainLoop, 100);
         };
 
@@ -108,6 +110,7 @@ function DialogFlowRobot (opts) {
                         // During this.wakeUp(), this is the expected path: recognize a face you know and greet them.
                         // Later, during this.mainLoop(), this is the rare case when someone went away and a different face is recognized.
                         robot.friend = Friend.create({name: result.name});
+                        robot.memory.addEvent({type:"friend", name: result.name, friend: robot.friend, time: new Date()});
                         robot.dialogflow.deleteContext("friend");
                         const friendContext = robot.dialogflow.addContext("friend", robot.dialogflow.formatCustomName(result.name));
                         await robot.dialogflow.event("friend", friendContext.parameters);
@@ -121,6 +124,8 @@ function DialogFlowRobot (opts) {
                 }
                 else if (result.status == "NO FACE" ) {
                     if ( robot.friend ) {
+                        // Data payload is the Friend that just disappeared
+                        robot.memory.addEvent({type:"alone", name: robot.friend.name, friend: robot.friend, time: new Date()});
                         robot.friend = null;
                         robot.dialogflow.deleteContext("friend");
                         await robot.dialogflow.event("noface");
@@ -133,8 +138,9 @@ function DialogFlowRobot (opts) {
 
         // Save new face in Rekognition service
         this.addFriend = function (friend) {
-            this.rekognition.add(friend);
+            robot.rekognition.add(friend);
             robot.friend = friend;
+            robot.memory.addEvent({type:"newFriend", name: friend.name, friend: robot.friend, time: new Date()});
         };
 
         return this;

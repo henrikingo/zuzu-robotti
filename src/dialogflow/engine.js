@@ -207,8 +207,8 @@ function DialogFlowEngine (robot, config) {
                     // The audio buffer is empty when streaming :-(
                     //play(data.outputAudio);
                     robot.say(queryResult.fulfillmentText);
-                    dfEngine.dfActions.action(queryResult);
                 }
+                dfEngine.dfActions.action(queryResult);
             }
         };
     };
