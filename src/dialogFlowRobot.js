@@ -22,10 +22,14 @@ function DialogFlowRobot (opts) {
 
         this.wakeUp = function () {
             console.log("Robot wake up. Open your eyes, look around.");
-            this.see(function() {
+            occasionally(robot.see, "default", function() {
                 // Use setTimeout to get out of callback hell before mainLoop
                 setTimeout(robot.mainLoop, 1);
             });
+//             this.see(function() {
+//                 // Use setTimeout to get out of callback hell before mainLoop
+//                 setTimeout(robot.mainLoop, 1);
+//             });
         };
 
         this.mainLoop = function () {
@@ -147,15 +151,15 @@ function DialogFlowRobot (opts) {
 }
 
 let ticks = {};
-const occasionally = function(callback, key) {
+const occasionally = function(callback, key, callbackParams) {
     key = key ? key : "default";
     let now = new Date();
     // By design the first call is true
-    if ( !ticks[key] ) ticks[key] = now - OCCASIONALLY;
+    if ( !ticks[key] ) ticks[key] = now - OCCASIONALLY - 1;
 
     if ( now - ticks[key] > OCCASIONALLY) {
         ticks[key] = now;
-        callback();
+        callback(callbackParams);
         return true;
     }
     return false;
