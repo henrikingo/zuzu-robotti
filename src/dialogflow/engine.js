@@ -189,7 +189,7 @@ function DialogFlowEngine (robot, config) {
     this.listenProgress = 0;
     this._streamIntentCallback = function (dfEngine) {
         assert(this.listenProgress == 0);
-        return function (data) {
+        return async function (data) {
             //console.log(data);
             dfEngine.listenProgress++;
             if (data.recognitionResult) {
@@ -208,7 +208,7 @@ function DialogFlowEngine (robot, config) {
                     //play(data.outputAudio);
                     robot.say(queryResult.fulfillmentText);
                 }
-                dfEngine.dfActions.action(queryResult);
+                await dfEngine.dfActions.action(queryResult);
             }
         };
     };

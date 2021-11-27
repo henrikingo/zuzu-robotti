@@ -4,12 +4,12 @@ const Friend = require('../friend.js');
 function DialogFlowActions(robot) {
     this.robot = robot;
 
-    this.action = function(queryResult) {
+    this.action = async function(queryResult) {
         if (! (queryResult.intent && queryResult.allRequiredParamsPresent) )
             return null;
 
         if (queryResult.action && typeof this[queryResult.action] == "function")
-            this[queryResult.action](queryResult);
+            await this[queryResult.action](queryResult);
     };
 
     this._getName = function(queryResult) {
@@ -29,7 +29,7 @@ function DialogFlowActions(robot) {
             return queryResult.parameters.fields.customName.structValue.fields.name.stringValue;
     };
 
-    this.strangerName = function(queryResult) {
+    this.strangerName = async function(queryResult) {
         console.log(`  Intent: ${queryResult.intent.displayName}`);
         let name = this._getName(queryResult);
         if (name) {
@@ -42,11 +42,11 @@ function DialogFlowActions(robot) {
 
     };
 
-    this.shutdown = function() {
+    this.shutdown = async function() {
         robot.say("Shutdown command received. But it doesn't work yet.");
     };
 
-    this.addNewFriend = function(queryResult) {
+    this.addNewFriend = async function(queryResult) {
         console.log(`  Intent: ${queryResult.intent.displayName}`);
         let name = this._getName(queryResult);
         if (name) {
@@ -58,12 +58,12 @@ function DialogFlowActions(robot) {
         }
     };
 
-    this.lastSeen = function(queryResult) {
+    this.lastSeen = async function(queryResult) {
         console.log(`  Intent: ${queryResult.intent.displayName}`);
         let name = this._getName(queryResult);
         if (name) {
-            const memoryEvent = this.robot.memory.lastSeen(name);
-            this._lastSeen(name, this.robot.memory.lastSeen(name));
+            const memoryEvent = await this.robot.memory.lastSeen(name);
+            this._lastSeen(name, memoryEvent);
         } else {
             console.log('  Name not found in result. I think this shouldn\'t happen???');
             console.log(queryResult);

@@ -7,7 +7,7 @@ const Rekognition = require('./aws/rekognition.js');
 const assert = require('assert');
 const camera = require('./camera/camera.js');
 const dialogflow = require('./dialogflow/engine.js');
-const memory = require('./memory/memory.js');
+const memory = require('./memory/astraMemory.js');
 
 const MAIN_LOOP = 100; // milliseconds
 const OCCASIONALLY = 10*1000; // milliseconds
