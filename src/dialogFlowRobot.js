@@ -50,6 +50,7 @@ function DialogFlowRobot (opts) {
 
         this._listening = false;
         this._speaking = false;
+        this._alone = true;
         this.busy = function() {
             return this.dialogflow.listenProgress > 0 || this._speaking;
         };
@@ -58,7 +59,7 @@ function DialogFlowRobot (opts) {
         };
 
         this.listen = function() {
-            if ( !robot._listening && !robot._speaking && !robot._sayQueue.length ) {
+            if ( !robot._listening && !robot._speaking && !robot._sayQueue.length && !robot._alone) {
                 console.log("Opening new stream to DialogFlow. You can speak anything you want.");
                 robot._listening = true;
                 robot.dialogflow.streamIntent(null, function () {
@@ -114,6 +115,7 @@ function DialogFlowRobot (opts) {
                         // During this.wakeUp(), this is the expected path: recognize a face you know and greet them.
                         // Later, during this.mainLoop(), this is the rare case when someone went away and a different face is recognized.
                         robot.friend = Friend.create({name: result.name});
+                        robot._alone = false;
                         robot.memory.addEvent({type:"friend", name: result.name, friend: robot.friend, time: new Date()});
                         robot.dialogflow.deleteContext("friend");
                         const friendContext = robot.dialogflow.addContext("friend", robot.dialogflow.formatCustomName(result.name));
@@ -122,6 +124,7 @@ function DialogFlowRobot (opts) {
                 }
                 else if (result.status == "UNKNOWN FACE") {
                     robot.friend = null;
+                    robot._alone = false;
                     robot.dialogflow.deleteContext("friend");
                     await robot.dialogflow.addContext("stranger");
                     await robot.dialogflow.event("stranger");
@@ -131,6 +134,7 @@ function DialogFlowRobot (opts) {
                         // Data payload is the Friend that just disappeared
                         robot.memory.addEvent({type:"alone", name: robot.friend.name, friend: robot.friend, time: new Date()});
                         robot.friend = null;
+                        robot._alone = true;
                         robot.dialogflow.deleteContext("friend");
                         await robot.dialogflow.event("noface");
                     }
