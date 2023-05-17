@@ -8,6 +8,7 @@ const assert = require('assert');
 const camera = require('./camera/camera.js');
 const dialogflow = require('./dialogflow/engine.js');
 const memory = require('./memory/astraMemory.js');
+//const memory = require('./memory/memory.js');
 
 const MAIN_LOOP = 100; // milliseconds
 const OCCASIONALLY = 10*1000; // milliseconds
@@ -33,11 +34,12 @@ function DialogFlowRobot (opts) {
         };
 
         this.mainLoop = function () {
-//             console.log("Top of main loop.");
+//            console.log("Top of main loop.");
             robot.reallySayThings();
             robot.listen();
             occasionally(robot.see);
             occasionally(robot.memory.dump, "dumpMemory");
+//            console.log("End of main loop.");
             setTimeout(robot.mainLoop, 100);
         };
 
@@ -59,6 +61,7 @@ function DialogFlowRobot (opts) {
         };
 
         this.listen = function() {
+            // console.log( "" + !robot._listening + " " + !robot._speaking + " " + !robot._sayQueue.length + " " + !robot._alone);
             if ( !robot._listening && !robot._speaking && !robot._sayQueue.length && !robot._alone) {
                 console.log("Opening new stream to DialogFlow. You can speak anything you want.");
                 robot._listening = true;
@@ -96,6 +99,7 @@ function DialogFlowRobot (opts) {
                         console.log("Play audio buffer.");
                         this._speaking = true;
                         play(whatToSay.audio, function () {
+                            console.log("Play audio callback");
                             robot._speaking = false;
                         });
                     }
