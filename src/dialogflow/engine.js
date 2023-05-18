@@ -251,8 +251,15 @@ function SpeechContextManager (config) {
         "boost": 5
     };
 
+    const datastaxNamesContext = {
+        "phrases": [
+            "Shankar", "Kiyu", "Sataya"
+        ],
+        "boost": 25
+    };
+
     this.getContexts = function () {
-        return [zuzuWordsContext, familyNamesContext, friendsNamesContext];
+        return [zuzuWordsContext, familyNamesContext, friendsNamesContext, datastaxNamesContext];
     }
 
     return this;
