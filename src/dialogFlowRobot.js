@@ -38,7 +38,7 @@ function DialogFlowRobot (opts) {
             robot.reallySayThings();
             robot.listen();
             occasionally(robot.see);
-            occasionally(robot.memory.dump, "dumpMemory");
+//            occasionally(robot.memory.dump, "dumpMemory");
 //            console.log("End of main loop.");
             setTimeout(robot.mainLoop, 100);
         };
@@ -52,7 +52,7 @@ function DialogFlowRobot (opts) {
 
         this._listening = false;
         this._speaking = false;
-        this._alone = true;
+        this._alone = null;
         this.busy = function() {
             return this.dialogflow.listenProgress > 0 || this._speaking;
         };
@@ -134,9 +134,10 @@ function DialogFlowRobot (opts) {
                     await robot.dialogflow.event("stranger");
                 }
                 else if (result.status == "NO FACE" ) {
-                    if ( robot.friend ) {
+                    if ( robot.friend || robot._alone === null) {
                         // Data payload is the Friend that just disappeared
-                        robot.memory.addEvent({type:"alone", name: robot.friend.name, friend: robot.friend, time: new Date()});
+                        robot.memory.addEvent({type:"alone", name: robot.friend ? robot.friend.name:"alone", friend: robot.friend, time: new Date()});
+//                        robot.memory.addEvent({type:"alone", name: robot.friend.name, friend: robot.friend, time: new Date()});
                         robot.friend = null;
                         robot._alone = true;
                         robot.dialogflow.deleteContext("friend");

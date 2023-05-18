@@ -26,6 +26,7 @@ function Memory(robot, config) {
     let astraClient = null;
 
     this._astra = async function () {
+        console.log(process.env);
         if(astraClient) return astraClient;
 
         // create an Astra DB client
@@ -35,7 +36,7 @@ function Memory(robot, config) {
             applicationToken: process.env.ASTRA_DB_APPLICATION_TOKEN,
         });
         // Will log your application token!!!
-        // console.log(astraClient);
+        console.log(astraClient);
         return astraClient;
     };
 
@@ -125,6 +126,8 @@ function Memory(robot, config) {
 
     this._makeKey = function(date){
         let dateStr = "ts" + date.toISOString();
+        return dateStr.replace(".", "").replace(":", "").replace("-", "").replace(".", "").replace(":", "").replace("-", "").replace(".", "").replace(":", "").replace("-", "").replace(".", "").replace(":", "").replace("-", "").replace(".", "").replace(":", "").replace("-", "").replace(".", "").replace(":", "").replace("-", "");
+
         return dateStr.replaceAll(".", "").replaceAll(":", "").replaceAll("-", "");
         return dateStr;
     };
