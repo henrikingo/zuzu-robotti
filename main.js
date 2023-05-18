@@ -5,7 +5,7 @@ const config = require('yaml-config').readConfig(__dirname + "/config.yml");
 
 const DialogFlowRobot = require('./src/dialogFlowRobot.js');
 
-
+require('./force.env.js');
 
 async function main() {
     i18n.configure({
